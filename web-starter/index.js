@@ -25,7 +25,8 @@ module.exports = generators.Base.extend({
     var config = _.extend({
       features : true,
       drupal_theme : '',
-      drupal_version : ''
+      drupal_version : '',
+      use_composer : true,
     }, this.config.getAll());
 
     return drupal_modules.getLatestMinorVersions('drupal').then(function(releases) {
@@ -61,6 +62,12 @@ module.exports = generators.Base.extend({
         name: 'drupal_theme',
         message: 'Theme name (machine name)',
         default: config.drupal_theme,
+      },
+      {
+        type: 'confirm',
+        name: 'use_composer',
+        message: 'Does it use Composer?',
+        default: config.use_composer,
       },
       {
         type: 'confirm',
@@ -102,6 +109,25 @@ module.exports = generators.Base.extend({
     drupal : function() {
       var that = this;
       var config = this.config.getAll();
+
+      if (config.use_composer) {
+        // Since this is the drupal8 generator, we can assume 8.x for Drupal Composer.
+        return this.remoteAsync('drupal-composer', 'drupal-project', '8.x')
+        .bind({})
+        .then(function(remote) {
+          this.remotePath = remote.cachePath;
+          return glob('**', { cwd : remote.cachePath });
+        })
+        .then(function(files) {
+          var remotePath = this.remotePath;
+          _.each(files, function(file) {
+            that.fs.copy(
+              remotePath + '/' + file,
+              that.destinationPath(file)
+            );
+          });
+        });
+      }
 
       if (config.install_drupal) {
         // Create a Promise for remote downloading
