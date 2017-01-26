@@ -2,7 +2,6 @@
 var generators = require('yeoman-generator'), 
   _ = require('lodash'),
   Promise = require('bluebird'),
-  rp = require('request-promise'),
   glob = Promise.promisify(require('glob')),
   pkg = require('../package.json'),
   ygp = require('yeoman-generator-bluebird'),
